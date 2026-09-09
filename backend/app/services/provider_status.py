@@ -7,6 +7,7 @@ def configuration_status(settings: Settings) -> dict:
     definitions = (
         ("llm", "模型服务", ("llm_api_key", "llm_base_url", "llm_model")),
         ("amap", "地图与天气", ("amap_web_service_key",)),
+        ("flights", "机票查询", ("amadeus_client_id", "amadeus_client_secret")),
     )
     for name, label, fields in definitions:
         missing = [field.upper() for field in fields if not getattr(settings, field).strip()]

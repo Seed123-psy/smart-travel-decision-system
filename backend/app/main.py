@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.flights import router as flights_router
 from app.api.health import router as health_router
 from app.api.providers import router as providers_router
 from app.api.planning import router as planning_router
@@ -40,7 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.add_middleware(
         CORSMiddleware,
         allow_origins=config.cors_origins,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["Content-Type"],
         expose_headers=["X-Request-ID"],
     )
@@ -70,6 +71,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(providers_router, prefix="/api")
     application.include_router(requirements_router, prefix="/api")
     application.include_router(planning_router, prefix="/api")
+    application.include_router(flights_router, prefix="/api")
     return application
 
 

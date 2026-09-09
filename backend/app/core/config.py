@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     llm_base_url: str = ""
     llm_model: str = ""
     amap_web_service_key: str = Field(default="", repr=False)
+    # Amadeus for Developers Self-Service uses an OAuth client pair; leave both
+    # blank to keep the flight page in explicit demo mode.
+    amadeus_client_id: str = Field(default="", repr=False)
+    amadeus_client_secret: str = Field(default="", repr=False)
+    amadeus_base_url: str = "https://test.api.amadeus.com"
 
     @field_validator("database_url")
     @classmethod

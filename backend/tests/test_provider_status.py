@@ -9,6 +9,7 @@ def test_status_reveals_missing_names_but_never_credentials_or_connection_urls()
         _env_file=None, database_url="", llm_api_key="private-model-token",
         llm_base_url="https://private-provider.example/v1", llm_model="private-model",
         amap_web_service_key="private-map-token",
+        amadeus_client_id="private-amadeus-id", amadeus_client_secret="private-amadeus-secret",
     )
     with TestClient(create_app(settings)) as client:
         response = client.get("/api/providers/status")
@@ -28,4 +29,5 @@ def test_partial_and_whitespace_configuration_remain_not_configured():
         result = client.get("/api/providers/status").json()
     assert result["providers"][0]["missing_fields"] == ["LLM_BASE_URL", "LLM_MODEL"]
     assert result["providers"][1]["missing_fields"] == ["AMAP_WEB_SERVICE_KEY"]
+    assert result["providers"][2]["missing_fields"] == ["AMADEUS_CLIENT_ID", "AMADEUS_CLIENT_SECRET"]
     assert all(item["status"] == "not_configured" for item in result["providers"])

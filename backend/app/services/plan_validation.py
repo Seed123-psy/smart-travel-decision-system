@@ -248,6 +248,8 @@ async def validate_plan(request: TravelRequest, collected: dict, amap: AmapProvi
                 "start_time": selected.start_time, "end_time": selected.end_time,
                 "reason": selected.reason, "opening_status": "unknown",
                 "evidence_refs": list(dict.fromkeys(refs)),
+                # Optional Amap display enhancements; not price or admission guarantees.
+                "photo": poi.get("photo"), "rating": poi.get("rating"), "cost": poi.get("cost"),
             })
         days.append({"date": day.date, "items": items, "segments": [], "weather": None,
                      "warnings": day_warnings})
@@ -263,7 +265,9 @@ async def validate_plan(request: TravelRequest, collected: dict, amap: AmapProvi
         _check_poi(chosen, request, city_codes)
         hotel = {"poi_id": draft.hotel_id, "name": chosen["name"], "address": chosen.get("address"),
                  "location": chosen.get("location"), "price": None,
-                 "rooms": request.rooms, "nights": nights}
+                 "rooms": request.rooms, "nights": nights,
+                 "photo": chosen.get("photo"), "rating": chosen.get("rating"),
+                 "cost": chosen.get("cost")}
     elif nights and request.rooms:
         warnings.append("尚未取得可用住宿建议，需要另行确认酒店。")
 

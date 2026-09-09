@@ -4,6 +4,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 const providerLabels = {
   llm: '模型服务',
   amap: '地图与天气',
+  flights: '机票查询',
 } as const
 type ProviderName = keyof typeof providerLabels
 interface ProviderState {
@@ -25,14 +26,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function parseStatus(value: unknown): ProviderState[] {
   if (!isRecord(value) || value.live_checked !== false
-    || !Array.isArray(value.providers) || value.providers.length !== 2) {
+    || !Array.isArray(value.providers)) {
     throw new Error('Invalid service status')
   }
 
+  const expected: ProviderName[] = ['llm', 'amap', 'flights']
   const entries = new Map<ProviderName, ProviderState>()
   for (const provider of value.providers) {
-    if (!isRecord(provider) || (provider.name !== 'llm' && provider.name !== 'amap')
-      || entries.has(provider.name) || provider.label !== providerLabels[provider.name]
+    if (!isRecord(provider) || !(provider.name === 'llm' || provider.name === 'amap' || provider.name === 'flights')
+      || entries.has(provider.name) || provider.label !== providerLabels[provider.name as ProviderName]
       || typeof provider.configured !== 'boolean'
       || !Array.isArray(provider.missing_fields)
       || !provider.missing_fields.every(field => typeof field === 'string')
@@ -43,12 +45,12 @@ function parseStatus(value: unknown): ProviderState[] {
     }
     entries.set(provider.name, {
       name: provider.name,
-      label: providerLabels[provider.name],
+      label: providerLabels[provider.name as ProviderName],
       status: provider.configured ? 'not_verified' : 'not_configured',
     })
   }
 
-  return (['llm', 'amap'] as const).map(name => entries.get(name)!)
+  return expected.map(name => entries.get(name)!).filter(Boolean)
 }
 
 async function refresh() {

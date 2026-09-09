@@ -84,8 +84,33 @@ def _location(value: Any) -> str | None:
 def _poi(item: dict[str, Any], *, details: bool = False) -> dict[str, Any]:
     extension = item.get("biz_ext")
     opening_hours = None
-    if details and isinstance(extension, dict):
-        opening_hours = _text(extension.get("open_time")) or _text(extension.get("opentime"))
+    photo = None
+    rating = None
+    cost = None
+    if isinstance(extension, dict):
+        if details:
+            opening_hours = _text(extension.get("open_time")) or _text(extension.get("opentime"))
+        # rating (0-5) and per-person cost are display references, not live tickets.
+        try:
+            rating = _number(extension.get("rating"), nonnegative=True)
+            cost = _number(extension.get("cost"), nonnegative=True)
+        except ProviderError:
+            rating = None
+            cost = None
+        if rating is not None and rating > 5:
+            rating = None
+    photos = item.get("photos")
+    if isinstance(photos, list):
+        for entry in photos:
+            if not isinstance(entry, dict):
+                continue
+            try:
+                url = _text(entry.get("url"))
+            except ProviderError:
+                url = None
+            if url and url.startswith("https://"):
+                photo = url
+                break
     return {
         "id": _text(item.get("id")), "name": _text(item.get("name")),
         "location": _location(item.get("location")), "adcode": _text(item.get("adcode")),
@@ -93,6 +118,7 @@ def _poi(item: dict[str, Any], *, details: bool = False) -> dict[str, Any]:
         "typecode": _text(item.get("typecode")),
         "city": _text(item.get("cityname")), "opening_hours": opening_hours,
         "operating_status": None, "ticket_price_cny": None,
+        "photo": photo, "rating": rating, "cost": cost,
     }
 
 
