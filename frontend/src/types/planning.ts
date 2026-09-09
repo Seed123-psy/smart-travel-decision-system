@@ -42,6 +42,10 @@ export interface PlanItem {
   reason: string
   opening_status: 'unknown' | 'verified'
   evidence_refs: EvidenceRef[]
+  /** Optional enhancement fields; old saved trips have none of these. */
+  photo?: string | null
+  rating?: number | null
+  cost?: number | null
 }
 export interface RouteSegment {
   from_item_id: string
@@ -59,12 +63,24 @@ export interface PlanDay {
   weather: Record<string, unknown> | null
   warnings: string[]
 }
+export interface PlanHotel {
+  poi_id: string
+  name: string
+  address: string | null
+  location: string | null
+  price: null
+  rooms: number
+  nights: number
+  photo?: string | null
+  rating?: number | null
+  cost?: number | null
+}
 export interface Plan {
   schema_version: 1
   title: string
   summary: string
   days: PlanDay[]
-  hotel: null | { poi_id: string; name: string; address: string | null; location: string | null; price: null; rooms: number; nights: number }
+  hotel: null | PlanHotel
   evidence: Record<string, unknown>[]
 }
 export interface Budget {

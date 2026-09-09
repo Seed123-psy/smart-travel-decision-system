@@ -1,7 +1,8 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ApiError } from '../api/client'
-import { createPlan, getHistory, getTrip, isTerminalTask } from '../api/planning'
+import { createPlan, deleteTrip, getHistory, getTrip, isTerminalTask } from '../api/planning'
 import { monitorTask } from '../api/taskMonitor'
+import { setCurrentTrip } from '../stores/currentTrip'
 import type { PlanningTask, TripDetail, TripHistoryItem } from '../types/planning'
 import type { TravelRequest } from '../types/travel'
 
@@ -144,6 +145,18 @@ export function usePlanning() {
     }
   }
 
+  async function removeTrip(id: string) {
+    await deleteTrip(id, { baseUrl })
+    if (trip.value?.trip_id === id) {
+      trip.value = null
+      task.value = null
+      taskId.value = null
+      remember(null)
+    }
+    setCurrentTrip(null)
+    await refreshHistory()
+  }
+
   async function recoverLatest() {
     // A timed-out POST can have been accepted. Inspect persisted tasks before allowing another POST.
     if (submitting.value || reading.value) return
@@ -173,5 +186,5 @@ export function usePlanning() {
 
   return { taskId, task, trip, submitting, reading, busy, connectionError, submissionError, uncertainSubmission,
     history, historyLoading, historyError, hasMoreHistory, storageAvailable,
-    generate, readTask, refreshHistory, openTrip, recoverLatest }
+    generate, readTask, refreshHistory, openTrip, recoverLatest, removeTrip }
 }

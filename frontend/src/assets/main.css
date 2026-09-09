@@ -37,12 +37,23 @@ button:disabled { cursor: not-allowed; }
 .skip-link { position: fixed; z-index: 10; top: -100px; left: 20px; background: white; padding: 12px 18px; }
 .skip-link:focus { top: 12px; }
 
-.site-header { max-width: 1280px; margin: auto; height: 88px; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.site-header { max-width: 1280px; margin: auto; height: 88px; padding: 0 48px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--line); }
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-size: 25px; font-weight: 600; letter-spacing: .06em; }
 .brand-symbol { width: 40px; height: 44px; border: 1px solid #7da091; border-radius: 14px 5px 14px 5px; color: var(--green); display: grid; place-items: center; font-size: 25px; font-weight: 500; background: #edf2e8; }
 .brand-caption { margin-left: 16px; padding-left: 16px; border-left: 1px solid #cad3c8; font-size: 13px; font-weight: 400; letter-spacing: .02em; color: var(--muted); vertical-align: middle; }
-.environment-tag { display: flex; gap: 8px; align-items: center; color: var(--green); font-size: 12px; background: #eaf0e5; padding: 7px 13px; border-radius: 30px; }
-.environment-tag > span { background: #548976; width: 6px; height: 6px; border-radius: 50%; }
+.brand-name { display: inline-block; }
+.site-nav { display: flex; gap: 4px; align-items: center; margin-left: auto; }
+.site-nav a { color: var(--ink); text-decoration: none; font-size: 14px; padding: 8px 14px; border-radius: 10px; letter-spacing: .01em; }
+.site-nav a:hover { background: #eef2e9; color: var(--green); }
+.site-nav a.router-link-active { color: var(--green); font-weight: 500; background: #e8efe5; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.progress-pill { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--green); font-size: 12px; background: #e9f1e6; padding: 8px 14px; border-radius: 30px; border: 1px solid #cfddc8; }
+.progress-pill span { width: 7px; height: 7px; border-radius: 50%; background: #4f8a71; animation: pulse-dot 1.4s ease-in-out infinite; }
+@keyframes pulse-dot { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+.dev-toggle { border: 1px solid var(--line); border-radius: 10px; min-width: 36px; height: 36px; background: var(--surface); color: var(--muted); font-size: 17px; }
+.dev-toggle:hover { background: #eef2e9; color: var(--green); }
+.chip { display: inline-flex; align-items: center; border: 1px solid #d6e0d1; background: var(--surface); color: #44604f; border-radius: 30px; padding: 8px 16px; font-size: 13px; text-decoration: none; }
+.chip:hover { border-color: #8fae94; background: #eff4e8; }
 .page-shell { max-width: 1280px; margin: auto; padding: 0 48px 64px; }
 
 .hero { display: flex; gap: 32px; justify-content: space-between; align-items: center; padding: 48px 0 38px; }

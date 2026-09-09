@@ -14,6 +14,10 @@ const time = (value: unknown) => string(value) && /^(?:[01]\d|2[0-3]):[0-5]\d(?:
 const money = (value: unknown) => string(value) && /^\d{1,8}(?:\.\d{1,2})?$/.test(value) && Number(value) > 0
 const version = (value: unknown) => value === null || (integer(value) && value > 0)
 const refs = (value: unknown) => Array.isArray(value) && value.every(item => string(item) || record(item))
+// Optional photo/rating/cost fields from Amap. Missing or null is fine (old trips); the rest must stay within a safe shape.
+const photoOk = (value: unknown) => value === undefined || value === null || (string(value) && /^https:\/\/\S+$/i.test(value))
+const ratingOk = (value: unknown) => value === undefined || value === null || (typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 5)
+const costOk = (value: unknown) => value === undefined || value === null || (typeof value === 'number' && Number.isFinite(value) && value >= 0)
 const location = (value: unknown) => value === null || (string(value) && /^-?\d+(?:\.\d+)?,-?\d+(?:\.\d+)?$/.test(value))
 const statuses = new Set(['queued', 'running', 'ready', 'degraded', 'failed'])
 const taskStatus = (value: unknown): value is TaskStatus => string(value) && statuses.has(value)
@@ -54,7 +58,8 @@ function isPlan(value: unknown): value is Plan {
     const itemsValid = day.items.every(item => record(item) && id(item.id) && string(item.poi_id)
       && string(item.name) && location(item.location) && nullableString(item.address)
       && time(item.start_time) && time(item.end_time) && string(item.reason)
-      && ['unknown', 'verified'].includes(String(item.opening_status)) && refs(item.evidence_refs))
+      && ['unknown', 'verified'].includes(String(item.opening_status)) && refs(item.evidence_refs)
+      && photoOk(item.photo) && ratingOk(item.rating) && costOk(item.cost))
     if (!itemsValid) return false
     const itemIds = new Set(day.items.map(item => item.id))
     return itemIds.size === day.items.length && day.segments.every(segment => record(segment)
@@ -67,7 +72,8 @@ function isPlan(value: unknown): value is Plan {
   return daysValid && new Set(value.days.map(day => day.date)).size === value.days.length
     && (hotel === null || (record(hotel) && string(hotel.poi_id) && string(hotel.name)
       && nullableString(hotel.address) && location(hotel.location) && hotel.price === null
-      && integer(hotel.rooms) && integer(hotel.nights)))
+      && integer(hotel.rooms) && integer(hotel.nights)
+      && photoOk(hotel.photo) && ratingOk(hotel.rating) && costOk(hotel.cost)))
 }
 
 function isBudget(value: unknown): value is Budget {
@@ -150,4 +156,35 @@ export function getTrip(tripId: string, options: RequestOptions = {}) {
 }
 export function getHistory(options: RequestOptions & { offset?: number } = {}) {
   return requestJson(`/trips?limit=20&offset=${options.offset || 0}`, isHistory, options)
+}
+
+export async function deleteTrip(tripId: string, options: RequestOptions = {}): Promise<void> {
+  const controller = new AbortController()
+  let timedOut = false
+  const abort = () => controller.abort()
+  if (options.signal?.aborted) abort()
+  options.signal?.addEventListener('abort', abort, { once: true })
+  const timeout = setTimeout(() => { timedOut = true; controller.abort() }, 10_000)
+  try {
+    const response = await fetch(
+      `${(options.baseUrl || '/api').replace(/\/$/, '')}/trips/${encodeURIComponent(tripId)}`,
+      { method: 'DELETE', signal: controller.signal, cache: 'no-store' },
+    )
+    if (controller.signal.aborted) throw new Error('Request aborted')
+    if (response.status === 204) return
+    const body: unknown = await response.json().catch(() => null)
+    throw new ApiError(record(body) && string(body.code) && string(body.message)
+      ? { code: body.code, message: body.message, request_id: string(body.request_id) ? body.request_id : undefined }
+      : { code: 'SERVICE_UNAVAILABLE', message: '本地服务暂不可用，请稍后重试。' })
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    throw new ApiError({
+      code: options.signal?.aborted ? 'REQUEST_CANCELLED' : timedOut ? 'REQUEST_TIMEOUT' : 'NETWORK_ERROR',
+      message: options.signal?.aborted ? '已停止操作。' : timedOut ? '删除请求超时，请稍后重试。'
+        : '无法连接本地服务，请确认服务启动后重试。',
+    })
+  } finally {
+    clearTimeout(timeout)
+    options.signal?.removeEventListener('abort', abort)
+  }
 }
