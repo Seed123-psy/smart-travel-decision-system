@@ -1,0 +1,26 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+.venv/
+dist/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage/
+*.tsbuildinfo
+
+# Local exports, logs, and document previews
+tmp/
+backend/storage/
+*.log
+playwright-report/
+test-results/
+.DS_Store
+Thumbs.db

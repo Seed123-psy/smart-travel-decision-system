@@ -1,0 +1,1 @@
+"""Smart Travel backend package."""
