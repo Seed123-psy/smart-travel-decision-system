@@ -27,6 +27,8 @@ ERROR_MESSAGES = {
     "PLAN_INVALID": "未能生成满足日期、地点或时段约束的行程，请调整需求后重试。",
     "NO_CANDIDATES": "未找到有效的目的地景点，请使用中国大陆城市名称重试。",
     "PLANNING_FAILED": "本次规划未完成，请稍后重试。",
+    "NOT_FOUND": "未找到对应的本地行程或任务。",
+    "TASK_RUNNING": "行程仍在生成中，完成后才能删除。",
 }
 
 
@@ -165,6 +167,22 @@ class PlanningService:
         except Exception:
             # Retry persistence on the next read after MySQL recovers.
             pass
+
+    async def delete_trip(self, trip_id):
+        if self.store is None:
+            raise PlanningError("DATABASE_UNAVAILABLE")
+        try:
+            async with asyncio.timeout(5):
+                await self._prepare()
+                outcome = await self.store.delete_trip(trip_id)
+        except PlanningError:
+            raise
+        except Exception:
+            raise PlanningError("DATABASE_UNAVAILABLE") from None
+        if outcome == "running":
+            raise PlanningError("TASK_RUNNING", 409)
+        if outcome == "not_found":
+            raise PlanningError("NOT_FOUND", 404)
 
     async def close(self):
         if self._handoff and not self._handoff.done():

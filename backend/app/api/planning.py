@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from app.schemas.travel import TravelRequest
 from app.services.planning import PlanningError
@@ -47,3 +47,12 @@ async def list_trips(request: Request, limit: int = Query(20, ge=1, le=50),
 @router.get("/trips/{trip_id}")
 async def get_trip(trip_id: UUID, request: Request):
     return await read_result(request, "trip", str(trip_id))
+
+
+@router.delete("/trips/{trip_id}", status_code=204)
+async def delete_trip(trip_id: UUID, request: Request):
+    try:
+        await request.app.state.planning.delete_trip(str(trip_id))
+    except PlanningError as exc:
+        return error_response(request, exc.code, exc.message, exc.status_code)
+    return Response(status_code=204)

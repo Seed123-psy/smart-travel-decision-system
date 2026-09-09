@@ -161,6 +161,20 @@ class PlanningStore:
                 "created_at": iso(trip.created_at),
             }
 
+    async def delete_trip(self, trip_id):
+        """Delete a saved trip (cascade) unless its latest task is still running."""
+        async with self.sessions.begin() as session:
+            task = (await session.scalars(select(PlanningTask).where(
+                PlanningTask.trip_id == trip_id
+            ).order_by(PlanningTask.created_at.desc(), PlanningTask.id.desc()).limit(1).with_for_update())).first()
+            if task is not None and task.status in {"queued", "running"}:
+                return "running"
+            trip = await session.get(Trip, trip_id, with_for_update=True)
+            if trip is None:
+                return "not_found"
+            await session.delete(trip)
+            return "deleted"
+
     async def trips(self, limit, offset):
         async with self.sessions() as session:
             rows = (await session.scalars(select(Trip).order_by(
